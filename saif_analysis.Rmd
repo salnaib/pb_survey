@@ -12,6 +12,16 @@ library(xlsx)
 respondents <- read.xlsx2("US & Canada Employee Survey Data.xls", 1)
 ```
 
+Pre-analysis tidying
+
+Order Q1: What is your company size?
+
+```{r}
+respondents$What.is.your.company.size. <- ordered(respondents$What.is.your.company.size., levels = c("1 (self employed)","2 to 500 employees","501 to 1,000 employees","1,001 to 5,000 employees Over 5,000 employees","Over 5,000 employees"), exclude = NULL)
+
+```
+
+
 ## Category:
 What is the state of Employee Engagement?
 
@@ -103,6 +113,8 @@ respondents[,35] <- ordered(respondents[,29], levels = c("Not applicable / Don't
 respondents[,36] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
 
 respondents[,37] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+
+names(respondents[,29:37]) <- substring(names(respondents[,29:37]), 1, 42)
 
 # Display Percentages: Email
 respondents %>%
@@ -640,6 +652,35 @@ respondents %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
+
+```
+
+
+### Analysis:
+ Regression analysis of Q31 attributes on Q8
+
+Q8: How would you rate your company in terms of digital technology adoption for internal communications?
+
+Q31: When thinking about your company's social media postings, how would you rate them on the following qualities?
+
+Q8 are rows
+Q31 are columns
+
+```{r}
+
+summary(lm(How.would.you.rate.your.company.in.terms.of.digital.technology.adoption.for.internal.communications.~.,data = data.frame(data.matrix(respondents[,c(18,126:131)]))))
+
+ftable(respondents$How.would.you.rate.your.company.in.terms.of.digital.technology.adoption.for.internal.communications.,respondents$posting_qualities_of_Interesting.appealing)
+
+ftable(respondents$How.would.you.rate.your.company.in.terms.of.digital.technology.adoption.for.internal.communications.,respondents$posting_qualities_of_Relateable)
+
+ftable(respondents$How.would.you.rate.your.company.in.terms.of.digital.technology.adoption.for.internal.communications.,respondents$posting_qualities_of_Informative)
+
+ftable(respondents$How.would.you.rate.your.company.in.terms.of.digital.technology.adoption.for.internal.communications.,respondents$posting_qualities_of_Timely.relevant)
+
+ftable(respondents$How.would.you.rate.your.company.in.terms.of.digital.technology.adoption.for.internal.communications.,respondents$posting_qualities_of_Engaging.content)
+
+ftable(respondents$How.would.you.rate.your.company.in.terms.of.digital.technology.adoption.for.internal.communications.,respondents$posting_qualities_of_High.quality.content)
 
 ```
 
