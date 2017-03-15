@@ -1,0 +1,649 @@
+---
+title: "Survey Analysis"
+output:
+  html_document: default
+  html_notebook: default
+  word_document: default
+---
+
+Load respondents and other data
+```{r}
+library(xlsx)
+respondents <- read.xlsx2("US & Canada Employee Survey Data.xls", 1)
+```
+
+## Category:
+What is the state of Employee Engagement?
+
+### Analysis:
+% who score 4 or 5 on all 3 outcome variables (Q5, Q6, Q7). New variable of "Highengaged".
+&
+% who score 4 or 5 on all 3 outcome variables (Q5, Q6, Q7). New variable of "Highengaged".
+&
+ % who score 1 or 2 on Q5, 1, 2 or 3 on Q6 BUT score 5 or 6 on Q7. New variable of "Toxic".
+Q5: Overall, how would you rate your work experience at your company?
+Q6: If asked about your company as a place to work, what kind of recommendation would you provide?
+Q7: How likely are you to remain an employee of your company over the next six months?
+```{r}
+library(dplyr)
+respondents <- respondents %>%
+# create highengaged variable
+  mutate(highengaged = as.numeric(respondents$Overall..how.would.you.rate.your.work.experience.at.your.company....) > 3 & as.numeric(respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide.) >3 & as.numeric(respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months.) >3) %>%
+# create lowengaged variable
+  mutate(lowengaged = as.numeric(respondents$Overall..how.would.you.rate.your.work.experience.at.your.company....) < 3 & as.numeric(respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide.) < 3 & as.numeric(respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months.) < 3) %>%
+# create toxic variable
+  mutate(toxic = as.numeric(respondents$Overall..how.would.you.rate.your.work.experience.at.your.company....) < 3 & as.numeric(respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide.) < 4 & as.numeric(respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months.) > 3)
+
+# display percentages
+# display percentages for highengaged
+respondents %>%
+  group_by(highengaged) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+# display percentages for lowengaged
+respondents %>%
+  group_by(lowengaged) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+# display percentages for toxic
+respondents %>%
+  group_by(toxic) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+```
+
+## Category:
+What is the state of workplace communications?
+
+### Analysis:
+Descriptive statistics on Q8 (one graph), Q10 (one graph)
+Q8: How would you rate your company in terms of digital technology adoption for internal communications?
+Q10: There are many ways to communicate and have your opinion heard in a company. We would like you
+to rate the effectiveness of each of the following in your company:
+```{r}
+
+# Q8 
+# Description of the vector
+#str(respondents$How.would.you.rate.your.company.in.terms.of.digital.technology.adoption.for.internal.communications.)
+# Make Q8 factor ordered
+respondents$How.would.you.rate.your.company.in.terms.of.digital.technology.adoption.for.internal.communications. <- ordered(respondents$How.would.you.rate.your.company.in.terms.of.digital.technology.adoption.for.internal.communications., levels = c("Poor","Fair","Good","Very Good","Excellent"), exclude = NULL)
+# display percentages
+respondents %>%
+  group_by(How.would.you.rate.your.company.in.terms.of.digital.technology.adoption.for.internal.communications.) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n)) %>%
+  rename(internalAdoptionRating = How.would.you.rate.your.company.in.terms.of.digital.technology.adoption.for.internal.communications.)
+
+# Q10
+# Description of the data frame
+#str(respondents[,29:37])
+# Summary of the data frame
+#summary(respondents[,29:37])
+
+colnames(respondents) <- gsub('There.are.many.ways.to.communicate.and.have.your.opinion.heard.in.a.company..We.would.like.you.to.rate.the.effectiveness.of.each.of.the.following.in.your.company....', 'effective_with_', colnames(respondents), fixed=TRUE)
+
+# Order Q10 columns
+respondents[,29] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+
+respondents[,30] <- ordered(respondents[,30], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+
+respondents[,31] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+
+respondents[,32] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+
+respondents[,33] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+
+respondents[,34] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+
+respondents[,35] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+
+respondents[,36] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+
+respondents[,37] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+
+# Display Percentages: Email
+respondents %>%
+  group_by(effective_with_Email..including.company.newsletters..etc..) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n)) #%>%
+
+# Display Percentages: DocManagement
+respondents %>%
+  group_by(effective_with_Document.management.platform..e.g...Sharepoint..Google.for.Work.) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n)) #%>%
+
+# Display Percentages: Survey
+respondents %>%
+  group_by(effective_with_Attitude...Engagement...Feedback.Surveys) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+# Display Percentages: SocialNetworkToolsInternally
+respondents %>%
+  group_by(effective_with_Social.Network.tools.used.internally..e.g...Yammer..Chatter..FaceBook.for.Work.) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+# Display Percentages: SocialNetworkToolsExternally
+respondents %>%
+  group_by(effective_with_Social.Network.tools.used.externally..e.g...Facebook..LinkedIn..Instagram..Snapchat.) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+# Display Percentages: EnterpriseCollabTools
+respondents %>%
+  group_by(effective_with_Enterprise.collaboration.tools..e.g...Slack..Chatter.) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+# Display Percentages: Blog
+respondents %>%
+  group_by(effective_with_Blogs...Microblogs) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+# Display Percentages: Wiki
+respondents %>%
+  group_by(effective_with_Company.Wikis) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+# Display Percentages: Content Sharing Communities
+respondents %>%
+  group_by(effective_with_Content.Sharing.Communities) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+```
+
+### Analysis:
+ New 3 points variable of "Effective" which classifies as follows: (average  of GT or EQ 4 across all Q10 = 3, average of  LT or EQ 2 across all Q10 = 1, ELSE = 2)
+
+```{r}
+
+# Store size of respondents
+numFeatrures <- ncol(respondents)
+
+# Get values of ordinal factors
+for(i in 29:37) {
+  respondents[,ncol(respondents) + 1] <- as.integer(respondents[,i])
+}
+
+# Get averages of answers to Q10 columns
+respondents <- transform(respondents, Q10Averages = rowMeans(respondents[,148:156], na.rm = TRUE))
+
+# Set the Effective Variable values
+respondents$Effective <- ifelse(respondents$Q10Averages >= 3, 3, ifelse(respondents$Q10Averages <= 2, 1, 2))
+
+# Display Percentages: Effective
+respondents %>%
+  group_by(as.factor(Effective)) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+
+```
+
+### Analysis:
+Relationship of "Effective" with "Highengaged", "Lowengaged" and "Toxic"
+
+```{r}
+ftable(respondents$Effective, respondents$highengaged)
+ftable(respondents$Effective, respondents$lowengaged)
+ftable(respondents$Effective, respondents$toxic)
+```
+
+
+## Category:
+Encouragement of Social Media in the workplace
+
+### Analysis:
+Descriptive statistics on Q21 thru Q27, including rank ordering Q21, Q24, Q25, Q27
+ 
+Q21: Does your company encourage the use of the following social media sites for business use? (check all that apply)
+
+```{r}
+
+colnames(respondents) <- gsub('Does.your.company.encourage.the.use.of.the.following.social.media.sites.for.business.use...check.all.that.apply....', 'encourage_using_', colnames(respondents), fixed=TRUE)
+
+# Display Percentages: LinkedIn
+respondents %>%
+  group_by(encourage_using_LinkedIn) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(encourage_using_Facebook) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(encourage_using_Instagram) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(encourage_using_Medium) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(encourage_using_Pinterest) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(encourage_using_Quora) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(encourage_using_Snapchat) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(encourage_using_Twitter) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(encourage_using_Youtube) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+
+```
+
+
+Q22: Are you encouraged to share your company's social postings on your personal social networks?
+
+```{r}
+
+colnames(respondents) <- gsub('Are.you.encouraged.to.share.your.company.s.social.postings.on.your.personal.social.networks.', 'encouragedPersonalNetworkSharing', colnames(respondents), fixed=TRUE)
+
+respondents %>%
+  group_by(encouragedPersonalNetworkSharing) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+```
+
+
+Q23: How have you done it?
+
+```{r}
+
+colnames(respondents) <- gsub('How.have.you.done.it....', 'shared_by_', colnames(respondents), fixed=TRUE)
+
+respondents %>%
+  group_by(shared_by_Copied.and.pasted.from.email) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(shared_by_Copied.and.pasted.from.website) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+colnames(respondents) <- gsub('shared_by_Retweeted.shared.from.official.company.channels..e.g...website.', 'shared_by_Retweeted', colnames(respondents), fixed=TRUE)
+
+respondents %>%
+  group_by(shared_by_Retweeted) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(shared_by_Other..please.specify.) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(shared_by_I.have.not.done.it) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+```
+
+
+Q24: In what ways have you participated in the use of social media for your workplace? (check all that apply)
+
+```{r}
+
+colnames(respondents) <- gsub('In.what.ways.have.you.participated.in.the.use.of.social.media.for.your.workplace...check.all.that.apply....', 'participated_by_', colnames(respondents), fixed=TRUE)
+
+respondents %>%
+  group_by(participated_by_Been.recommended.by.my.colleagues) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(participated_by_Communicated.major.changes.in.our.company) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(participated_by_Defended.employer.to.family.and.friends) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(participated_by_Defended.employer.where.others.could.see.or.read.it) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(participated_by_Encouraged.others.to.buy.company.s.products.or.services) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(participated_by_I.have.not.participated) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(participated_by_Made.positive.comments.about.employer.to.friends.or.family) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(participated_by_Made.positive.comments.about.employer.where.others.could.see.or.read.them) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(participated_by_Other..please.specify.) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+
+```
+
+Q25: Which of the following are you most likely to share on your personal social media about your workplace? [check all that apply]
+
+```{r}
+
+colnames(respondents) <- gsub('Which.of.the.following.are.you.most.likely.to.share.on.your.personal.social.media.about.your.workplace...check.all.that.apply....', 'most_likely_to_share_', colnames(respondents), fixed=TRUE)
+
+respondents %>%
+  group_by(most_likely_to_share_Company.achievements) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(most_likely_to_share_Company.mentions.in.the.news) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(most_likely_to_share_Contests) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(most_likely_to_share_Corporate.Social.Responsibility) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(most_likely_to_share_Events.organized.by.the.company) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(most_likely_to_share_Industry.news) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(most_likely_to_share_My.achievements) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(most_likely_to_share_Other..please.specify.) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(most_likely_to_share_Peer.achievements) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(most_likely_to_share_Promotional.messages) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+```
+
+Q26: Are you allowed to share company content and add your own commentary to your company's social media shares?
+
+```{r}
+
+colnames(respondents) <- gsub('Are.you.allowed.to.share.company.content.and.add.your.own.commentary.to.your.company.s.social.media.shares.', 'allowed_to_share', colnames(respondents), fixed=TRUE)
+
+respondents %>%
+  group_by(allowed_to_share) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+
+```
+
+
+Q27: Which of the following would encourage you to share more about your workplace? (check all that apply)
+
+```{r}
+
+colnames(respondents) <- gsub('Which.of.the.following.would.encourage.you.to.share.more.about.your.workplace...check.all.that.apply....', 'encourage_me_to_share_by_', colnames(respondents), fixed=TRUE)
+
+respondents %>%
+  group_by(encourage_me_to_share_by_An.ability.to.comment) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(encourage_me_to_share_by_An.easy.interface) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(encourage_me_to_share_by_Good.visual.images) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(encourage_me_to_share_by_Relevant.content) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(encourage_me_to_share_by_None.of.the.above) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+```
+
+
+### Analysis:
+find any interesting (stand out) relationships between demos in Q1, Q3 and the attributes Q22, Q26
+
+Q1: What is your company size?
+
+vs
+Q22: Are you encouraged to share your company's social postings on your personal social networks?
+```{r}
+
+ftable(respondents$What.is.your.company.size.,respondents$encouragedPersonalNetworkSharing)
+
+```
+
+vs
+Q26: Are you allowed to share company content and add your own commentary to your company's social media shares?
+
+```{r}
+
+ftable(respondents$What.is.your.company.size.,respondents$allowed_to_share)
+
+```
+
+
+Q3: Which would you describe your company as primarily?
+
+vs
+Q22: Are you encouraged to share your company's social postings on your personal social networks?
+
+```{r}
+
+ftable(respondents$Which.would.you.describe.your.company.as.primarily.,respondents$encouragedPersonalNetworkSharing)
+
+```
+
+vs
+Q26: Are you allowed to share company content and add your own commentary to your company's social media shares?
+
+```{r}
+
+ftable(respondents$Which.would.you.describe.your.company.as.primarily.,respondents$allowed_to_share)
+
+```
+
+
+## Category:
+Drivers of Social Media
+
+### Analysis:
+Descriptive statistics on 4s and 5s for Q31, Q32
+
+Q31: When thinking about your company's social media postings, how would you rate them on the following qualities?
+
+```{r}
+
+colnames(respondents) <- gsub('When.thinking.about.your.company.s.social.media.postings..how.would.you.rate.them.on.the.following.qualities....', 'posting_qualities_of_', colnames(respondents), fixed=TRUE)
+
+respondents[,126] <- ordered(respondents[,126], levels = c("Very poor","Poor","Average","Good","Excellent"), exclude = NULL)
+
+respondents[,127] <- ordered(respondents[,127], levels = c("Very poor","Poor","Average","Good","Excellent"), exclude = NULL)
+
+respondents[,128] <- ordered(respondents[,128], levels = c("Very poor","Poor","Average","Good","Excellent"), exclude = NULL)
+
+respondents[,129] <- ordered(respondents[,129], levels = c("Very poor","Poor","Average","Good","Excellent"), exclude = NULL)
+
+respondents[,130] <- ordered(respondents[,130], levels = c("Very poor","Poor","Average","Good","Excellent"), exclude = NULL)
+
+respondents[,131] <- ordered(respondents[,131], levels = c("Very poor","Poor","Average","Good","Excellent"), exclude = NULL)
+
+respondents %>%
+  group_by(posting_qualities_of_Engaging.content) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(posting_qualities_of_High.quality.content) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(posting_qualities_of_Informative) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(posting_qualities_of_Interesting.appealing) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(posting_qualities_of_Relateable) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(posting_qualities_of_Timely.relevant) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+```
+
+Q32: How active are the following employees on workplace relevant social media in your company?
+
+```{r}
+
+colnames(respondents) <- gsub('How.active.are.the.following.employees.on.workplace.relevant.social.media.in.your.company....', 'how_active_is_', colnames(respondents), fixed=TRUE)
+
+respondents[,132] <- ordered(respondents[,132], levels = c("No activity","Somewhat active","Moderately active","Active","Very active","Don't know"), exclude = NULL)
+
+respondents[,133] <- ordered(respondents[,133], levels = c("No activity","Somewhat active","Moderately active","Active","Very active","Don't know"), exclude = NULL)
+
+respondents[,134] <- ordered(respondents[,134], levels = c("No activity","Somewhat active","Moderately active","Active","Very active","Don't know"), exclude = NULL)
+
+respondents[,135] <- ordered(respondents[,135], levels = c("No activity","Somewhat active","Moderately active","Active","Very active","Don't know"), exclude = NULL)
+
+respondents[,136] <- ordered(respondents[,136], levels = c("No activity","Somewhat active","Moderately active","Active","Very active","Don't know"), exclude = NULL)
+
+respondents[,137] <- ordered(respondents[,137], levels = c("No activity","Somewhat active","Moderately active","Active","Very active","Don't know"), exclude = NULL)
+
+respondents[,138] <- ordered(respondents[,138], levels = c("No activity","Somewhat active","Moderately active","Active","Very active","Don't know"), exclude = NULL)
+
+respondents[,139] <- ordered(respondents[,139], levels = c("No activity","Somewhat active","Moderately active","Active","Very active","Don't know"), exclude = NULL)
+
+respondents[,140] <- ordered(respondents[,140], levels = c("No activity","Somewhat active","Moderately active","Active","Very active","Don't know"), exclude = NULL)
+
+respondents %>%
+  group_by(how_active_is_Corporate...Head.Office.employees) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(how_active_is_Corporate...Head.Office.managers) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(how_active_is_Customer.facing.employees) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(how_active_is_Customer.facing.managers) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(how_active_is_Directors.) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(how_active_is_Myself) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(how_active_is_President...CEO...Owner) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(how_active_is_Senior.Executives...C.Suite) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+respondents %>%
+  group_by(how_active_is_Vice.Presidents) %>%
+  summarise (n = n()) %>%
+  mutate(freq = n / sum(n))
+
+
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).
