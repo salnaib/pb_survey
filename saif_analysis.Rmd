@@ -6,64 +6,157 @@ output:
   word_document: default
 ---
 
-Load respondents and other data
-```{r}
-library(xlsx)
-respondents <- read.xlsx2("US & Canada Employee Survey Data.xls", 1)
+```{r, echo=FALSE}
+
+#Load libraries
+
+suppressMessages(library(xlsx))
+suppressMessages(library(dplyr))
+suppressMessages(library(tidyr))
+suppressMessages(library(ggplot2))
+
 ```
 
-Pre-analysis tidying
+```{r, echo=FALSE}
 
-Order Q1: What is your company size?
+#Load respondents and other data
 
-```{r}
+respondents <- read.xlsx2("US & Canada Employee Survey Data.xls", 1)
+
+#Pre-analysis tidying
+#Order Q1: What is your company size?
 respondents$What.is.your.company.size. <- ordered(respondents$What.is.your.company.size., levels = c("1 (self employed)","2 to 500 employees","501 to 1,000 employees","1,001 to 5,000 employees Over 5,000 employees","Over 5,000 employees"), exclude = NULL)
 
 ```
 
 
 ## Category:
-What is the state of Employee Engagement?
+#### What is the state of Employee Engagement?
 
 ### Analysis:
-% who score 4 or 5 on all 3 outcome variables (Q5, Q6, Q7). New variable of "Highengaged".
-&
-% who score 4 or 5 on all 3 outcome variables (Q5, Q6, Q7). New variable of "Highengaged".
-&
- % who score 1 or 2 on Q5, 1, 2 or 3 on Q6 BUT score 5 or 6 on Q7. New variable of "Toxic".
-Q5: Overall, how would you rate your work experience at your company?
-Q6: If asked about your company as a place to work, what kind of recommendation would you provide?
-Q7: How likely are you to remain an employee of your company over the next six months?
-```{r}
-library(dplyr)
+
+Q5: Overall, how would you rate your work experience at your company?  
+Rating from 1 - 5  
+  
+Q6: If asked about your company as a place to work, what kind of recommendation would you provide?  
+Rating from 1 - 5  
+  
+Q7: How likely are you to remain an employee of your company over the next six months?  
+Rating from 1 - 5  
+  
+#### Highengaged are those who score 4 or 5 on all 3 outcome variables (Q5, Q6, Q7)
+#### Lowengaged are those who score 1 or 2 on all 3 outcome variables (Q5, Q6, Q7)
+#### Lowengaged_new are those who score 1,2 or 3 on all 3 outcome variables (Q5, Q6, Q7)
+#### Toxic are those who score 1 or 2 on Q5, 1, 2 or 3 on Q6 BUT score 5 or 6 on Q7
+#### Toxic_new are those who score 1,2 or 3 on Q5, 1, 2 or 3 on Q6 BUT score 3, 4 or 5 on Q7
+
+```{r, echo=FALSE}
 respondents <- respondents %>%
 # create highengaged variable
   mutate(highengaged = as.numeric(respondents$Overall..how.would.you.rate.your.work.experience.at.your.company....) > 3 & as.numeric(respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide.) >3 & as.numeric(respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months.) >3) %>%
 # create lowengaged variable
   mutate(lowengaged = as.numeric(respondents$Overall..how.would.you.rate.your.work.experience.at.your.company....) < 3 & as.numeric(respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide.) < 3 & as.numeric(respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months.) < 3) %>%
+# create lowengaged_new variable
+  mutate(lowengaged_new = as.numeric(respondents$Overall..how.would.you.rate.your.work.experience.at.your.company....) < 4 & as.numeric(respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide.) < 4 & as.numeric(respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months.) < 4) %>%
 # create toxic variable
-  mutate(toxic = as.numeric(respondents$Overall..how.would.you.rate.your.work.experience.at.your.company....) < 3 & as.numeric(respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide.) < 4 & as.numeric(respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months.) > 3)
+  mutate(toxic = as.numeric(respondents$Overall..how.would.you.rate.your.work.experience.at.your.company....) < 3 & as.numeric(respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide.) < 4 & as.numeric(respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months.) > 3) %>%
+# create toxic_new variable
+  mutate(toxic_new = as.numeric(respondents$Overall..how.would.you.rate.your.work.experience.at.your.company....) < 4 & as.numeric(respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide.) < 4 & as.numeric(respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months.) > 2)
 
-# display percentages
-# display percentages for highengaged
-respondents %>%
-  group_by(highengaged) %>%
-  summarise (n = n()) %>%
-  mutate(freq = n / sum(n))
-
-# display percentages for lowengaged
-respondents %>%
-  group_by(lowengaged) %>%
-  summarise (n = n()) %>%
-  mutate(freq = n / sum(n))
-
-# display percentages for toxic
-respondents %>%
-  group_by(toxic) %>%
-  summarise (n = n()) %>%
-  mutate(freq = n / sum(n))
+hlt_summary <- respondents %>%
+  select(highengaged, lowengaged, lowengaged_new, toxic, toxic_new) %>%
+  gather(type, answer) %>%
+  group_by(type, answer) %>%
+  summarize(count = n()) %>%
+  mutate(freq = count / sum(count))
 
 ```
+
+```{r, echo=FALSE}
+
+hlt_summary
+
+ggplot(hlt_summary, aes(fill=answer, y=count, x=type)) + 
+    geom_bar( stat="identity")
+
+```
+
+
+### Analysis:
+Regression analysis of Q9 attributes on Q5
+
+```{r, echo=FALSE}
+
+# Make Q5 factor ordered
+respondents$Overall..how.would.you.rate.your.work.experience.at.your.company.... <- ordered(respondents$Overall..how.would.you.rate.your.work.experience.at.your.company...., levels = c("Poor","Fair","Good","Very Good","Excellent"), exclude = NULL)
+
+# Make Q6 factor ordered
+respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide. <- ordered(respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide., levels = c("Very negative","Negative","Neutral","Positive","Very positive"), exclude = NULL)
+
+# Make Q7 factor ordered
+respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months. <- ordered(respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months., levels = c("Very Unlikely","Unlikely","Somewhat Likely","Likely","Very Likely"), exclude = NULL)
+
+colnames(respondents) <- gsub('Overall..how.would.you.rate.your.work.experience.at.your.company....', 'rate_your_work', colnames(respondents), fixed=TRUE)
+
+colnames(respondents) <- gsub('If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide.', 'reccommendation_on_work_', colnames(respondents), fixed=TRUE)
+
+colnames(respondents) <- gsub('How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months.', 'likely_to_remain', colnames(respondents), fixed=TRUE)
+
+colnames(respondents) <- gsub('Please.rate.your.experience.at.your.workplace.on.the.following.attributes....', 'rate_experience_', colnames(respondents), fixed=TRUE)
+
+# Make Q9 factor ordered
+respondents[,19] <- ordered(respondents[,19], levels = c("Poor","Fair","Good","Very Good","Excellent"), exclude = NULL)
+
+respondents[,20] <- ordered(respondents[,20], levels = c("Poor","Fair","Good","Very Good","Excellent"), exclude = NULL)
+
+respondents[,21] <- ordered(respondents[,21], levels = c("Poor","Fair","Good","Very Good","Excellent"), exclude = NULL)
+
+respondents[,22] <- ordered(respondents[,22], levels = c("Poor","Fair","Good","Very Good","Excellent"), exclude = NULL)
+
+respondents[,23] <- ordered(respondents[,23], levels = c("Poor","Fair","Good","Very Good","Excellent"), exclude = NULL)
+
+respondents[,24] <- ordered(respondents[,24], levels = c("Poor","Fair","Good","Very Good","Excellent"), exclude = NULL)
+
+respondents[,25] <- ordered(respondents[,25], levels = c("Poor","Fair","Good","Very Good","Excellent"), exclude = NULL)
+
+respondents[,26] <- ordered(respondents[,26], levels = c("Poor","Fair","Good","Very Good","Excellent"), exclude = NULL)
+
+respondents[,27] <- ordered(respondents[,27], levels = c("Poor","Fair","Good","Very Good","Excellent"), exclude = NULL)
+
+respondents[,28] <- ordered(respondents[,28], levels = c("Poor","Fair","Good","Very Good","Excellent"), exclude = NULL)
+
+```
+
+```{r}
+summary(lm(as.numeric(respondents$rate_your_work)~.,data = data.frame(data.matrix(respondents[,c(19:28)]))))
+
+ggplot(respondents, aes(x=as.numeric(respondents[,19]), y=as.numeric(rate_your_work))) + geom_point(shape=1) +  geom_smooth(method=lm , color="red", se=FALSE) + geom_count()
+
+ggplot(respondents, aes(x=as.numeric(respondents[,20]), y=as.numeric(rate_your_work))) + geom_point(shape=1) +  geom_smooth(method=lm , color="red", se=FALSE) + geom_count()
+
+ggplot(respondents, aes(x=as.numeric(respondents[,21]), y=as.numeric(rate_your_work))) + geom_point(shape=1) +  geom_smooth(method=lm , color="red", se=FALSE) + geom_count()
+
+ggplot(respondents, aes(x=as.numeric(respondents[,22]), y=as.numeric(rate_your_work))) + geom_point(shape=1) +  geom_smooth(method=lm , color="red", se=FALSE) + geom_count()
+
+ggplot(respondents, aes(x=as.numeric(respondents[,23]), y=as.numeric(rate_your_work))) + geom_point(shape=1) +  geom_smooth(method=lm , color="red", se=FALSE) + geom_count()
+
+ggplot(respondents, aes(x=as.numeric(respondents[,24]), y=as.numeric(rate_your_work))) + geom_point(shape=1) +  geom_smooth(method=lm , color="red", se=FALSE) + geom_count()
+
+ggplot(respondents, aes(x=as.numeric(respondents[,25]), y=as.numeric(rate_your_work))) + geom_point(shape=1) +  geom_smooth(method=lm , color="red", se=FALSE) + geom_count()
+
+ggplot(respondents, aes(x=as.numeric(respondents[,26]), y=as.numeric(rate_your_work))) + geom_point(shape=1) +  geom_smooth(method=lm , color="red", se=FALSE) + geom_count()
+
+ggplot(respondents, aes(x=as.numeric(respondents[,27]), y=as.numeric(rate_your_work))) + geom_point(shape=1) +  geom_smooth(method=lm , color="red", se=FALSE) + geom_count()
+
+ggplot(respondents, aes(x=as.numeric(respondents[,28]), y=as.numeric(rate_your_work))) + geom_point(shape=1) +  geom_smooth(method=lm , color="red", se=FALSE) + geom_count()
+
+
+summary(lm(as.numeric(respondents$reccommendation_on_work_)~.,data = data.frame(data.matrix(respondents[,c(19:28)]))))
+
+summary(lm(as.numeric(respondents$likely_to_remain)~.,data = data.frame(data.matrix(respondents[,c(19:28)]))))
+
+```
+
 
 ## Category:
 What is the state of workplace communications?
@@ -73,7 +166,7 @@ Descriptive statistics on Q8 (one graph), Q10 (one graph)
 Q8: How would you rate your company in terms of digital technology adoption for internal communications?
 Q10: There are many ways to communicate and have your opinion heard in a company. We would like you
 to rate the effectiveness of each of the following in your company:
-```{r}
+```{r, echo=FALSE}
 
 # Q8 
 # Description of the vector
@@ -100,21 +193,34 @@ respondents[,29] <- ordered(respondents[,29], levels = c("Not applicable / Don't
 
 respondents[,30] <- ordered(respondents[,30], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
 
-respondents[,31] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+respondents[,31] <- ordered(respondents[,31], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
 
-respondents[,32] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+respondents[,32] <- ordered(respondents[,32], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
 
-respondents[,33] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+respondents[,33] <- ordered(respondents[,33], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
 
-respondents[,34] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+respondents[,34] <- ordered(respondents[,34], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
 
-respondents[,35] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+respondents[,35] <- ordered(respondents[,35], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
 
-respondents[,36] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+respondents[,36] <- ordered(respondents[,36], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
 
-respondents[,37] <- ordered(respondents[,29], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
+respondents[,37] <- ordered(respondents[,37], levels = c("Not applicable / Don't know","Not at all effective","Slightly effective","Moderately effective","Effective","Very effective"), exclude = NULL)
 
 names(respondents[,29:37]) <- substring(names(respondents[,29:37]), 1, 42)
+
+effective_with_summary <- respondents %>%
+  select(29:37) %>%
+  gather(effective_with_, answer) %>%
+  group_by(effective_with_, answer) %>%
+  summarize(count = n()) %>%
+  mutate(freq = count / sum(count))
+
+```
+
+```{r}
+
+ggplot(respondents, aes(x=as.factor(How.would.you.rate.your.company.in.terms.of.digital.technology.adoption.for.internal.communications.) )) + geom_bar()
 
 # Display Percentages: Email
 respondents %>%
@@ -170,12 +276,16 @@ respondents %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
+ggplot(effective_with_summary, aes(fill=answer, y=count, x=effective_with_),order=answer) + 
+    geom_bar( stat="identity")
+
 ```
+
 
 ### Analysis:
  New 3 points variable of "Effective" which classifies as follows: (average  of GT or EQ 4 across all Q10 = 3, average of  LT or EQ 2 across all Q10 = 1, ELSE = 2)
 
-```{r}
+```{r, echo=FALSE}
 
 # Store size of respondents
 numFeatrures <- ncol(respondents)
@@ -191,22 +301,43 @@ respondents <- transform(respondents, Q10Averages = rowMeans(respondents[,148:15
 # Set the Effective Variable values
 respondents$Effective <- ifelse(respondents$Q10Averages >= 3, 3, ifelse(respondents$Q10Averages <= 2, 1, 2))
 
+```
+
+```{r}
 # Display Percentages: Effective
 respondents %>%
   group_by(as.factor(Effective)) %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
+ggplot(respondents, aes(x=as.factor(Effective) )) + geom_bar()
 
 ```
 
 ### Analysis:
 Relationship of "Effective" with "Highengaged", "Lowengaged" and "Toxic"
 
+```{r, echo=FALSE}
+
+effective_hlt_summary <- respondents %>%
+  select(Effective, highengaged, lowengaged, lowengaged_new, toxic, toxic_new) %>%
+  gather(engagement_type, answer, -Effective) %>%
+  group_by(engagement_type, Effective) %>%
+  summarize(count = sum(answer))
+
+```
+
 ```{r}
+
 ftable(respondents$Effective, respondents$highengaged)
 ftable(respondents$Effective, respondents$lowengaged)
+ftable(respondents$Effective, respondents$lowengaged_new)
 ftable(respondents$Effective, respondents$toxic)
+ftable(respondents$Effective, respondents$toxic_new)
+
+ggplot(effective_hlt_summary, aes(fill=engagement_type, y=count, x=Effective)) + 
+    geom_bar( stat="identity")
+
 ```
 
 
@@ -222,48 +353,55 @@ Q21: Does your company encourage the use of the following social media sites for
 
 colnames(respondents) <- gsub('Does.your.company.encourage.the.use.of.the.following.social.media.sites.for.business.use...check.all.that.apply....', 'encourage_using_', colnames(respondents), fixed=TRUE)
 
+encourage_using_summary <- respondents %>%
+  select(grepl("encourage_using_", names(encourage_using_summary))) %>%
+  gather(engagement_type, answer, -Effective) %>%
+  group_by(engagement_type, Effective) %>%
+  summarize(count = sum(answer))
+
+
 # Display Percentages: LinkedIn
-respondents %>%
+encourage_using_LinkedIn <- respondents %>%
   group_by(encourage_using_LinkedIn) %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
-respondents %>%
+encourage_using_LinkedIn <- respondents %>%
   group_by(encourage_using_Facebook) %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
-respondents %>%
+encourage_using_LinkedIn <- respondents %>%
   group_by(encourage_using_Instagram) %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
-respondents %>%
+encourage_using_LinkedIn <- respondents %>%
   group_by(encourage_using_Medium) %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
-respondents %>%
+encourage_using_LinkedIn <- respondents %>%
   group_by(encourage_using_Pinterest) %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
-respondents %>%
+encourage_using_LinkedIn <- respondents %>%
   group_by(encourage_using_Quora) %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
-respondents %>%
+encourage_using_LinkedIn <- respondents %>%
   group_by(encourage_using_Snapchat) %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
-respondents %>%
+encourage_using_LinkedIn <- respondents %>%
   group_by(encourage_using_Twitter) %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
-respondents %>%
+encourage_using_LinkedIn <- respondents %>%
   group_by(encourage_using_Youtube) %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
@@ -684,6 +822,13 @@ ftable(respondents$How.would.you.rate.your.company.in.terms.of.digital.technolog
 
 ```
 
+```{r, echo=FALSE}
+
+write.xlsx(respondents, file="saif_employee.xlsx", sheetName="Data")
+
+write.xlsx(respondents, file="saif_employee.xlsx", sheetName="Q18", append = TRUE)
+
+```
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
 
