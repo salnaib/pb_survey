@@ -25,7 +25,7 @@ respondents <- read.xlsx2("US & Canada Employee Survey Data.xls", 1)
 
 #Pre-analysis tidying
 #Order Q1: What is your company size?
-respondents$What.is.your.company.size. <- ordered(respondents$What.is.your.company.size., levels = c("1 (self employed)","2 to 500 employees","501 to 1,000 employees","1,001 to 5,000 employees Over 5,000 employees","Over 5,000 employees"), exclude = NULL)
+#respondents$What.is.your.company.size. <- ordered(respondents$What.is.your.company.size., levels = c("1 (self employed)","2 to 500 employees","501 to 1,000 employees","1,001 to 5,000 employees Over 5,000 employees","Over 5,000 employees"), exclude = NULL)
 
 ```
 
@@ -51,6 +51,16 @@ Rating from 1 - 5
 #### Toxic_new are those who score 1,2 or 3 on Q5, 1, 2 or 3 on Q6 BUT score 3, 4 or 5 on Q7
 
 ```{r, echo=FALSE}
+
+# Make Q5 factor ordered
+respondents$Overall..how.would.you.rate.your.work.experience.at.your.company.... <- ordered(respondents$Overall..how.would.you.rate.your.work.experience.at.your.company...., levels = c("Poor","Fair","Good","Very Good","Excellent"), exclude = NULL)
+
+# Make Q6 factor ordered
+respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide. <- ordered(respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide., levels = c("Very negative","Negative","Neutral","Positive","Very positive"), exclude = NULL)
+
+# Make Q7 factor ordered
+respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months. <- ordered(respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months., levels = c("Very Unlikely","Unlikely","Somewhat Likely","Likely","Very Likely"), exclude = NULL)
+
 respondents <- respondents %>%
 # create highengaged variable
   mutate(highengaged = as.numeric(respondents$Overall..how.would.you.rate.your.work.experience.at.your.company....) > 3 & as.numeric(respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide.) >3 & as.numeric(respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months.) >3) %>%
@@ -86,15 +96,6 @@ ggplot(hlt_summary, aes(fill=answer, y=count, x=type)) +
 Regression analysis of Q9 attributes on Q5
 
 ```{r, echo=FALSE}
-
-# Make Q5 factor ordered
-respondents$Overall..how.would.you.rate.your.work.experience.at.your.company.... <- ordered(respondents$Overall..how.would.you.rate.your.work.experience.at.your.company...., levels = c("Poor","Fair","Good","Very Good","Excellent"), exclude = NULL)
-
-# Make Q6 factor ordered
-respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide. <- ordered(respondents$If.asked.about.your.company.as.a.place.to.work..what.kind.of.recommendation.would.you.provide., levels = c("Very negative","Negative","Neutral","Positive","Very positive"), exclude = NULL)
-
-# Make Q7 factor ordered
-respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months. <- ordered(respondents$How.likely.are.you.to.remain.an.employee.of.your.company.over.the.next.six.months., levels = c("Very Unlikely","Unlikely","Somewhat Likely","Likely","Very Likely"), exclude = NULL)
 
 colnames(respondents) <- gsub('Overall..how.would.you.rate.your.work.experience.at.your.company....', 'rate_your_work', colnames(respondents), fixed=TRUE)
 
@@ -354,10 +355,13 @@ Q21: Does your company encourage the use of the following social media sites for
 colnames(respondents) <- gsub('Does.your.company.encourage.the.use.of.the.following.social.media.sites.for.business.use...check.all.that.apply....', 'encourage_using_', colnames(respondents), fixed=TRUE)
 
 encourage_using_summary <- respondents %>%
-  select(grepl("encourage_using_", names(encourage_using_summary))) %>%
-  gather(engagement_type, answer, -Effective) %>%
-  group_by(engagement_type, Effective) %>%
-  summarize(count = sum(answer))
+  select(encourage_using_LinkedIn:encourage_using_Youtube) %>%
+  gather(encourage_using, SocialMediaType) %>%
+  group_by(encourage_using, SocialMediaType) %>%
+  summarize(count = n()) %>%
+  mutate(freq = count/2107) %>%
+  filter(SocialMediaType != "") %>%
+  select(encourage_using, count, freq)
 
 
 # Display Percentages: LinkedIn
@@ -409,6 +413,12 @@ encourage_using_LinkedIn <- respondents %>%
 
 ```
 
+```{r}
+
+encourage_using_summary
+
+```
+
 
 Q22: Are you encouraged to share your company's social postings on your personal social networks?
 
@@ -416,10 +426,12 @@ Q22: Are you encouraged to share your company's social postings on your personal
 
 colnames(respondents) <- gsub('Are.you.encouraged.to.share.your.company.s.social.postings.on.your.personal.social.networks.', 'encouragedPersonalNetworkSharing', colnames(respondents), fixed=TRUE)
 
-respondents %>%
+encouragedPersonalNetworkSharing <- respondents %>%
   group_by(encouragedPersonalNetworkSharing) %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
+
+encouragedPersonalNetworkSharing
 
 ```
 
@@ -456,6 +468,17 @@ respondents %>%
   group_by(shared_by_I.have.not.done.it) %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
+
+shared_by_summary <- respondents %>%
+  select(shared_by_Copied.and.pasted.from.email:shared_by_Other..please.specify.) %>%
+  gather(shared_by, shared_by_type) %>%
+  group_by(shared_by, shared_by_type) %>%
+  summarize(count = n()) %>%
+  mutate(freq = count/2107) %>%
+  filter(shared_by_type != "") %>%
+  select(shared_by, count, freq)
+
+shared_by_summary
 
 ```
 
@@ -511,6 +534,16 @@ respondents %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
+participated_by_summary <- respondents %>%
+  select(participated_by_Recommended.employer.to.others.as.a.place.to.work:participated_by_Other..please.specify.) %>%
+  gather(participated_by, participated_by_type) %>%
+  group_by(participated_by, participated_by_type) %>%
+  summarize(count = n()) %>%
+  mutate(freq = count/2107) %>%
+  filter(participated_by_type != "") %>%
+  select(participated_by, count, freq)
+
+participated_by_summary
 
 ```
 
@@ -570,6 +603,18 @@ respondents %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
+most_likely_to_share_summary <- respondents %>%
+  select(most_likely_to_share_Events.organized.by.the.company:most_likely_to_share_Other..please.specify.) %>%
+  gather(most_likely_to_share, most_likely_to_share_type) %>%
+  group_by(most_likely_to_share, most_likely_to_share_type) %>%
+  summarize(count = n()) %>%
+  mutate(freq = count/2107) %>%
+  filter(most_likely_to_share_type != "") %>%
+  select(most_likely_to_share, count, freq)
+
+most_likely_to_share_summary
+
+
 ```
 
 Q26: Are you allowed to share company content and add your own commentary to your company's social media shares?
@@ -578,11 +623,12 @@ Q26: Are you allowed to share company content and add your own commentary to you
 
 colnames(respondents) <- gsub('Are.you.allowed.to.share.company.content.and.add.your.own.commentary.to.your.company.s.social.media.shares.', 'allowed_to_share', colnames(respondents), fixed=TRUE)
 
-respondents %>%
+allowed_to_share <- respondents %>%
   group_by(allowed_to_share) %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
+allowed_to_share
 
 ```
 
@@ -617,6 +663,18 @@ respondents %>%
   group_by(encourage_me_to_share_by_None.of.the.above) %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
+
+encourage_me_to_share_by_summary <- respondents %>%
+  select(encourage_me_to_share_by_An.easy.interface:encourage_me_to_share_by_None.of.the.above) %>%
+  gather(encourage_me_to_share_by, encourage_me_to_share_by_type) %>%
+  group_by(encourage_me_to_share_by, encourage_me_to_share_by_type) %>%
+  summarize(count = n()) %>%
+  mutate(freq = count/2107) %>%
+  filter(encourage_me_to_share_by_type != "") %>%
+  select(encourage_me_to_share_by, count, freq)
+
+encourage_me_to_share_by_summary
+
 
 ```
 
@@ -719,6 +777,19 @@ respondents %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
+posting_qualities_of_summary <- respondents %>%
+  select(posting_qualities_of_Interesting.appealing:posting_qualities_of_High.quality.content) %>%
+  gather(posting_qualities_of, rating) %>%
+  group_by(posting_qualities_of, rating) %>%
+  summarize(count = n()) %>%
+  mutate(freq = count/2107) %>%
+  select(posting_qualities_of, rating, count, freq) %>%
+  mutate(rating = ordered(rating, levels = c("Very poor","Poor","Average","Good","Excellent"), exclude = NULL)) %>%
+  mutate(rating_numeric = as.numeric(rating)) %>%
+  arrange(posting_qualities_of, rating)
+
+posting_qualities_of_summary
+
 ```
 
 Q32: How active are the following employees on workplace relevant social media in your company?
@@ -790,6 +861,18 @@ respondents %>%
   summarise (n = n()) %>%
   mutate(freq = n / sum(n))
 
+how_active_is_summary <- respondents %>%
+  select(how_active_is_Customer.facing.employees:how_active_is_Myself) %>%
+  gather(how_active_is, rating) %>%
+  group_by(how_active_is, rating) %>%
+  summarize(count = n()) %>%
+  mutate(freq = count/2107) %>%
+  select(how_active_is, rating, count, freq) %>%
+  mutate(rating = ordered(rating, levels = c("Don't know", "No activity","Somewhat active","Moderately active","Active","Very active"), exclude = NULL)) %>%
+  mutate(rating_numeric = as.numeric(rating)) %>%
+  arrange(how_active_is, rating)
+
+how_active_is_summary
 
 ```
 
@@ -826,7 +909,27 @@ ftable(respondents$How.would.you.rate.your.company.in.terms.of.digital.technolog
 
 write.xlsx(respondents, file="saif_employee.xlsx", sheetName="Data")
 
-write.xlsx(respondents, file="saif_employee.xlsx", sheetName="Q18", append = TRUE)
+write.xlsx(as.data.frame(encourage_using_summary), file="saif_employee_encourage_using_summary.xlsx", sheetName="Q21")
+
+write.xlsx(as.data.frame(encouragedPersonalNetworkSharing), file="saif_employee_encouragedPersonalNetworkSharing.xlsx", sheetName="Q22")
+
+write.xlsx(as.data.frame(shared_by_summary), file="saif_employee_shared_by_summary.xlsx", sheetName="Q23")
+
+write.xlsx(as.data.frame(participated_by_summary), file="saif_employee_participated_by_summary.xlsx", sheetName="Q24")
+
+write.xlsx(as.data.frame(most_likely_to_share_summary), file="saif_employee_most_likely_to_share_summary.xlsx", sheetName="Q25")
+
+write.xlsx(as.data.frame(allowed_to_share), file="saif_employee_allowed_to_share.xlsx", sheetName="Q26")
+
+write.xlsx(as.data.frame(encourage_me_to_share_by_summary), file="saif_employee_encourage_me_to_share_by_summary.xlsx", sheetName="Q27")
+
+write.xlsx(as.data.frame(posting_qualities_of_summary), file="saif_employee_posting_qualities_of_summary.xlsx", sheetName="Q31")
+
+write.xlsx(as.data.frame(how_active_is_summary), file="saif_employee_how_active_is_summary.xlsx", sheetName="Q32")
+
+write.xlsx(as.data.frame(hlt_summary), file="saif_employee_hlt_summary.xlsx", sheetName="hlt_summary")
+
+write.xlsx(as.data.frame(effective_hlt_summary), file="saif_employee_effective_hlt_summary.xlsx", sheetName="effective_hlt_summary")
 
 ```
 
